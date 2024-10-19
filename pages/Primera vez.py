@@ -1,5 +1,6 @@
 import streamlit as st
-
+import pandas as pd
+from io import BytesIO
 # Set up a form to accept all input variables
 st.title("Personal Fitness Parameters")
 
@@ -27,18 +28,43 @@ with st.form("fitness_form"):
     # Submit button
     submitted = st.form_submit_button("Submit")
 
-# Output the inputs after submission
 if submitted:
+    # Collect data into a list of tuples (Feature, Value)
+    user_data = [
+        ("Weight (kg)", weight),
+        ("Height (cm)", height),
+        ("Age (years)", age),
+        ("Years of Training", n_years_training),
+        ("Gender", gender),
+        ("Activity Level", activity),
+        ("Goal", goal),
+        ("Type of Weight Change", type_of_weight_change),
+        ("Preference for High Fats", preference_high_fats),
+        ("Preference for High Protein", preference_high_protein),
+        ("Use Pre-Workout Supplement", pre_workout),
+        ("Use Post-Workout Supplement", post_workout)
+    ]
+
+    # Convert to DataFrame with two columns: 'Feature' and 'Value'
+    df = pd.DataFrame(user_data, columns=["Feature", "Value"])
+
+    # Display the submitted data
     st.write("Here are your inputs:")
-    st.write(f"Weight: {weight} kg")
-    st.write(f"Height: {height} cm")
-    st.write(f"Age: {age} years")
-    st.write(f"Years of Training: {n_years_training} years")
-    st.write(f"Gender: {gender}")
-    st.write(f"Activity Level: {activity}")
-    st.write(f"Goal: {goal}")
-    st.write(f"Type of Weight Change: {type_of_weight_change}")
-    st.write(f"Preference for High Fats: {preference_high_fats}")
-    st.write(f"Preference for High Protein: {preference_high_protein}")
-    st.write(f"Use Pre-Workout Supplement: {pre_workout}")
-    st.write(f"Use Post-Workout Supplement: {post_workout}")
+    st.dataframe(df)
+
+    # Function to convert DataFrame to Excel and return as BytesIO object
+    def to_excel(df):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='User_Data')
+        processed_data = output.getvalue()
+        return processed_data
+
+    # Convert DataFrame to Excel and store it in memory
+    xlsx_data = to_excel(df)
+
+    # Create a download button for the Excel file
+    st.download_button(label='Download Excel file',
+                       data=xlsx_data,
+                       file_name='user_data.xlsx',
+                       mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
