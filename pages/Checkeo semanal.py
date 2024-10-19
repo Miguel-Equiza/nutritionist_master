@@ -7,5 +7,5 @@ if uploaded_file is not None:
     # Read the Excel file into a DataFrame
     df = pd.read_excel(uploaded_file)
 
-st.write("Here are your inputs:")
-st.dataframe(df)
+    st.write("Here are your inputs:")
+    st.dataframe(df)
