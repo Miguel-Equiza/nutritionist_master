@@ -31,10 +31,10 @@ with st.form("fitness_form"):
     type_of_weight_change = st.selectbox("Type of Weight Change", ["Slow", "Moderate", "Quick"], index=0)
 
     # Boolean preference inputs
-    preference_high_fats = st.selectbox("Preference for High Fats", ["False", "True"], index=0)
-    preference_high_protein = st.selectbox("Preference for High Protein", ["False", "True"], index=0)
-    pre_workout = st.selectbox("Use Pre-Workout Supplement", ["False", "True"], index=0)
-    post_workout = st.selectbox("Use Post-Workout Supplement", ["False", "True"], index=0)
+    preference_high_fats = st.selectbox("Preference for High Fats", [False, True], index=0)
+    preference_high_protein = st.selectbox("Preference for High Protein", [False, True], index=0)
+    pre_workout = st.selectbox("Use Pre-Workout Supplement", [False, True], index=0)
+    post_workout = st.selectbox("Use Post-Workout Supplement", [False, True], index=0)
 
     # Submit button
     submitted = st.form_submit_button("Submit")
