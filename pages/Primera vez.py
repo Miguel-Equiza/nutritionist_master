@@ -83,7 +83,7 @@ if submitted:
             df.to_excel(writer, index=False, sheet_name='User_Data')
             unique_n_meals = meals_df['n_meals'].unique()
             for n in unique_n_meals:
-                df_subset = df[df['n_meals'] == n]
+                df_subset = meals_df[meals_df['n_meals'] == n]
                 df_subset.to_excel(writer, sheet_name=f'n_meals_{n}', index=False)
         processed_data = output.getvalue()
         return processed_data
