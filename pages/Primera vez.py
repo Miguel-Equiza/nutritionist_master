@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+from diet_logic.diet_maker import *
+
 # Set up a form to accept all input variables
 st.title("Personal Fitness Parameters")
 
@@ -9,6 +11,15 @@ with st.form("fitness_form"):
     weight = st.number_input("Weight (kg)", min_value=1, value=78, step=1, format="%i")
     height = st.number_input("Height (cm)", min_value=1, value=168, step=1, format="%i")
     age = st.number_input("Age (years)", min_value=1, value=23, step=1, format="%i")
+
+    # Add a checkbox to toggle whether the number input is required
+    use_number = st.checkbox("Do you know exactly what your body fat is?", value=False)
+
+    # Show the number input only if the user has checked the box
+    if use_number:
+        boy_fat = st.number_input("Input your body fat", value=0, step=1)  # Default to 0
+    else:
+        body_fat = 0
 
     # Accepting float input for years of training
     n_years_training = st.number_input("Years of Training", min_value=0.0, value=5.0, step=0.1)
@@ -68,3 +79,20 @@ if submitted:
                        data=xlsx_data,
                        file_name='user_data.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+min_calories_meal = 500
+max_calories_meal = 1000
+min_meals = 3
+max_meals = 5
+pre_workout_cals = 300
+post_workout_cals = 200
+
+if submitted:
+    calories, kg_per_week = get_calories(weight, height, age, n_years_training, gender, activity, goal, type_of_weight_change, body_fat)
+    fats, carbs, proteins = macros_cutting(weight, calories, preference_high_fats, preference_high_protein)
+    meals = meal_calories(calories, fats, carbs, proteins, min_calories_meal, max_calories_meal, min_meals, max_meals, pre_workout, post_workout, pre_workout_cals, post_workout_cals)
+    new_data = generate_specific_meals(meals)
+    meals_df = get_meals_df(new_data)
+
+    st.write("Here are your diets:")
+    st.dataframe(df)

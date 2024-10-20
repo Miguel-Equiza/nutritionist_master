@@ -1,4 +1,7 @@
-
+import pandas as pd
+import numpy as np
+from scipy.optimize import minimize
+from meals_dict import *
 
 def mifflin_bmr_calculator(weight: float, height: int, age: int, gender = ["Male", "Female"]):
   """
@@ -121,13 +124,17 @@ def macros_bulking(weight, calories, preference_high_fats: bool, preference_high
   carb_grams = (calories - fat_grams*9 - protein_grams*4)/4
   return int(fat_grams), int(carb_grams), int(protein_grams)
 
+
+min_calories_meal, max_calories_meal, min_meals, max_meals = 500, 1000, 3, 5
+
 def get_macros(goal, weight, calories, preference_high_fats: bool, preference_high_protein: bool):
   assert goal in ["Cut", "Bulk", "Maintenance"], "Goal has to be one of the following: Cut, Bulk, Maintenance"
 
   if goal == "Cut": return macros_cutting(weight, calories, preference_high_fats, preference_high_protein)
   else: return macros_bulking(weight, calories, preference_high_fats, preference_high_protein)
 
-
+pre_workout_cals = 300
+post_workout_cals = 200
 
 def meal_calories(calories, fats, carbs, proteins, min_calories_meal, max_calories_meal, min_meals, max_meals, pre_workout: bool, post_workout: bool, pre_workout_cals, post_workout_cals):
   if post_workout | pre_workout: max_meals -= 1
@@ -143,8 +150,113 @@ def meal_calories(calories, fats, carbs, proteins, min_calories_meal, max_calori
     if ((calories - min_calories_meal*i) >= 0) & ((calories - max_calories_meal*i) <= 0): meals[i] = {"calories" : int(calories/i), "fats": int(fats/i), "carbs": int(carbs/i), "proteins": int(proteins/i), "pre_workout": pre_workout, "post_workout": post_workout}
   return meals
 
+def generate_specific_meals(meals):
+    new_data = {}
+    # Iterate over the original dictionary
+    for key, value in meals.items():
+        # Extract only the specific fields for the new keys
+        sub_dict = {k: v for k, v in value.items() if k in ['fats', 'carbs', 'proteins']}
 
-def adjust_calories(weight, type_of_weight_change, new_weight, calories, goal, gender):
+        # Create new keys with suffix and assign the sub_dict
+        for j in range(1, key+1):
+            new_key = f"{key}_{j}"
+            new_data[new_key] = sub_dict
+
+        if value.get('pre_workout'):
+            pre_workout_key = f"{key}_pre_entrenamiento"
+            new_data[pre_workout_key] = sub_dict
+
+        if value.get('post_workout'):
+            post_workout_key = f"{key}_post_entrenamiento"
+            new_data[post_workout_key] = sub_dict
+    return new_data
+
+def ingredient_array(ingredient1, ingredient2, ingredient3):
+  return np.array([
+    [ingredient1["fats"], ingredient1["carbs"], ingredient1["proteins"]],
+    [ingredient2["fats"], ingredient2["carbs"], ingredient2["proteins"]],
+    [ingredient3["fats"], ingredient3["carbs"], ingredient3["proteins"]]
+])
+
+# Function to calculate macros given amounts of each ingredient
+def calculate_macros(ingredients, amounts):
+    return np.dot(ingredients.T, amounts)
+
+# Objective function: Minimize the sum of squared errors between target and actual macros
+def objective_function(amounts, macro_goals, ingredients):
+    achieved_macros = calculate_macros(ingredients, amounts)
+    error = achieved_macros - macro_goals
+    return np.sum(error ** 2)  # Sum of squared errors
+
+# Constraint: Ensure the achieved macros are within ±5 grams of the target macros
+def constraint_function(amounts, macro_goals, ingredients):
+    achieved_macros = calculate_macros(ingredients, amounts)
+    return np.abs(achieved_macros - macro_goals) - 5  # Difference should be <= 5
+
+# Set bounds to ensure non-negative amounts for each ingredient
+bounds = [(0, None), (0, None), (0, None)]  # No negative values for pechuga_pollo, arroz, or aguacate
+
+def round_to_nearest_five(n):
+    return 5 * round(n / 5)
+
+def calculate_amounts(macro_goals, ingredients):
+    target_macros = np.array([macro_goals['fats'], macro_goals['carbs'], macro_goals['proteins']])
+
+    # Initial guess for the amounts of each ingredient (start with 100g each)
+    initial_guess = [1, 1, 1]  # Initial guess (you can modify this to a better starting point)
+
+    # Define the constraints
+    constraints = {
+        'type': 'ineq',  # Inequality constraints
+        'fun': lambda amounts: constraint_function(amounts, target_macros, ingredients)
+    }
+
+    # Use the minimize function with the objective and constraints
+    result = minimize(
+        objective_function,
+        initial_guess,
+        args=(target_macros, ingredients),
+        bounds=bounds,
+        constraints=constraints,
+        method='SLSQP'  # Sequential Least Squares Programming (handles bounds and constraints)
+    )
+    amounts = result.x  # Convert back to grams (since we work with per 100g macros)
+    x, y, z = amounts
+    return round_to_nearest_five(x), round_to_nearest_five(y), round_to_nearest_five(z)
+
+def calculate_amounts_meal(macro_goals, ingredient1, ingredient2, ingredient3):
+    ingredients = ingredient_array(ingredient1, ingredient2, ingredient3)
+    ingredient1_grams, ingredient2_grams, ingredient3_grams = calculate_amounts(macro_goals, ingredients)
+    return ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1["name"], ingredient2["name"], ingredient3["name"]
+
+
+
+def get_meals_df(new_data):
+  all_meals = []
+  for key, macros in new_data.items():
+    if key.endswith('_1'):
+      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, huevo, pan_bimbo, jamon_serrano)
+
+    if key.endswith('_2'):
+      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, arroz, aguacate)
+
+    if key.endswith('_3'):
+      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, spagetis, aguacate)
+
+    if key.endswith("_pre_entrenamiento"):
+      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = 60, 15, 10, "Tortitas de arroz", "Miel", "Cacahuetes"
+
+    if key.endswith('_4'):
+      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, spagetis, aguacate)
+
+    all_meals.append([key[0], "Comida "+key[2:], ingredient1_name + ": "+ str(ingredient1_grams)+" g. " + ingredient2_name + ": "+ str(ingredient2_grams)+" g. " + ingredient3_name + ": "+ str(ingredient3_grams)+" g"])
+
+  columns = ['n_meals', 'meal_type', 'ingredients']
+  df = pd.DataFrame(all_meals, columns=columns)
+  return df
+
+
+def adjust_calories(n_years_training, weight, type_of_weight_change, new_weight, calories, goal, gender):
   assert gender in ["Male", "Female"], "Gender must be Male or Female"
   assert goal in ["Cut", "Bulk", "Maintenance"], "Goal has to be one of the following: Cut, Bulk, Maintenance"
   assert type_of_weight_change in ["Slow", "Moderate", "Quick"], "Type of weight change has to be one of the following: Slow, Moderate, Quick"
