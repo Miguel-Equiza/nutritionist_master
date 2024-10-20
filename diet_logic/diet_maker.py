@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
-from meals_dict import *
+from diet_logic.meals_dict import *
 
 def mifflin_bmr_calculator(weight: float, height: int, age: int, gender = ["Male", "Female"]):
   """
