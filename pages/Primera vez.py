@@ -95,4 +95,4 @@ if submitted:
     meals_df = get_meals_df(new_data)
 
     st.write("Here are your diets:")
-    st.dataframe(df)
+    st.dataframe(meals_df)
