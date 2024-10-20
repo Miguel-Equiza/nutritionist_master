@@ -30,6 +30,11 @@ with st.form("fitness_form"):
     pre_workout = st.selectbox("Use Pre-Workout Supplement", [False, True], index=0)
     post_workout = st.selectbox("Use Post-Workout Supplement", [False, True], index=0)
 
+    with st.expander("Advanced settings for professionals"):
+        cals = st.number_input("Enter the calories you want", min_value=0)
+        lote = st.number_input("Select grams of protein per kg of bodyweight")
+
+
     # Submit button
     submitted = st.form_submit_button("Submit")
 
