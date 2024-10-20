@@ -89,7 +89,7 @@ if submitted:
         return processed_data
 
     # Convert DataFrame to Excel and store it in memory
-    xlsx_data = to_excel(df)
+    xlsx_data = to_excel(df, meals_df)
 
     # Create a download button for the Excel file
     st.download_button(label='Download Excel file',
