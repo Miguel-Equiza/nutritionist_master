@@ -13,7 +13,7 @@ with st.form("fitness_form"):
     age = st.number_input("Age (years)", min_value=1, value=23, step=1, format="%i")
 
     # Add a checkbox to toggle whether the number input is required
-    boy_fat = st.number_input("Input your body fat if you know it, if not leave it as 0", value=0, step=1)
+    body_fat = st.number_input("Input your body fat if you know it, if not leave it as 0", value=0, step=1)
 
     # Accepting float input for years of training
     n_years_training = st.number_input("Years of Training", min_value=0.0, value=5.0, step=0.1)
