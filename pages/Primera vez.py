@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from diet_logic.diet_maker import *
+from diet_logic.meals_dict import *
 
 # Set up a form to accept all input variables
 st.title("Personal Fitness Parameters")
@@ -73,13 +74,11 @@ if submitted:
     fats, carbs, proteins = macros_cutting(weight, calories, preference_high_fats, preference_high_protein)
     meals = meal_calories(calories, fats, carbs, proteins, min_calories_meal, max_calories_meal, min_meals, max_meals, pre_workout, post_workout, pre_workout_cals, post_workout_cals)
     new_data = generate_specific_meals(meals)
-    meals_df = get_meals_df(new_data)
+    all_ingredients_df = pd.DataFrame(comida)
+    meals_df = get_meals_df(all_ingredients_df, new_data)
 
     st.write("Here are your diets:")
     st.dataframe(meals_df)
-
-
-
 
     # Function to convert DataFrame to Excel and return as BytesIO object
     def to_excel(df, meals_df):

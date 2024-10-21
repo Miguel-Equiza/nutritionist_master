@@ -171,90 +171,74 @@ def generate_specific_meals(meals):
             new_data[post_workout_key] = sub_dict
     return new_data
 
-def ingredient_array(ingredient1, ingredient2, ingredient3):
-  return np.array([
-    [ingredient1["fats"], ingredient1["carbs"], ingredient1["proteins"]],
-    [ingredient2["fats"], ingredient2["carbs"], ingredient2["proteins"]],
-    [ingredient3["fats"], ingredient3["carbs"], ingredient3["proteins"]]
-])
+def get_exemplary_macros(df, macro_goals, protein_category, carb_category, fat_category):
+  protein_source = df[df["category"] == protein_category].iloc[0,:]
+  carb_source = df[df["category"] == carb_category].iloc[0,:]
+  fat_source = df[df["category"] == fat_category].iloc[0,:]
 
-# Function to calculate macros given amounts of each ingredient
-def calculate_macros(ingredients, amounts):
-    return np.dot(ingredients.T, amounts)
+  macro_goals["carbs"] -= 3
+  carb_grams = macro_goals["carbs"]/carb_source["carbs"]
 
-# Objective function: Minimize the sum of squared errors between target and actual macros
-def objective_function(amounts, macro_goals, ingredients):
-    achieved_macros = calculate_macros(ingredients, amounts)
-    error = achieved_macros - macro_goals
-    return np.sum(error ** 2)  # Sum of squared errors
+  macro_goals["proteins"] = macro_goals["proteins"] - carb_source["proteins"]*carb_grams
+  protein_grams = macro_goals["proteins"]/protein_source["proteins"]
+  macro_goals["fats"] = macro_goals["fats"] - protein_source["fats"]*protein_grams - carb_source["fats"]*carb_grams
+  fat_grams = macro_goals["fats"]/fat_source["fats"]
 
-# Constraint: Ensure the achieved macros are within ±5 grams of the target macros
-def constraint_function(amounts, macro_goals, ingredients):
-    achieved_macros = calculate_macros(ingredients, amounts)
-    return np.abs(achieved_macros - macro_goals) - 5  # Difference should be <= 5
-
-# Set bounds to ensure non-negative amounts for each ingredient
-bounds = [(0, None), (0, None), (0, None)]  # No negative values for pechuga_pollo, arroz, or aguacate
+  macro_goals["fats"] = macro_goals["fats"]
+  macro_goals["carbs"] = macro_goals["carbs"] - fat_grams*fat_source["carbs"]
+  macro_goals["proteins"] = macro_goals["proteins"] - fat_grams*fat_source["proteins"]
+  return macro_goals
 
 def round_to_nearest_five(n):
+    if n<0: n = 0
     return 5 * round(n / 5)
 
-def calculate_amounts(macro_goals, ingredients):
-    target_macros = np.array([macro_goals['fats'], macro_goals['carbs'], macro_goals['proteins']])
+def macro_str_maker(df, macro_goals, ingredient_category, macro):
+  category_df = df[df["category"] == ingredient_category]
+  category_df["ingredient_grams"] = category_df[macro].apply(lambda x: round_to_nearest_five(macro_goals[macro] / x))
+  macro_str = " / ".join(x["name"] + ": "+str(x["ingredient_grams"]) + " g" for _,x in category_df.iterrows()) + ". "
+  return ingredient_category +" = "+ macro_str
 
-    # Initial guess for the amounts of each ingredient (start with 100g each)
-    initial_guess = [1, 1, 1]  # Initial guess (you can modify this to a better starting point)
+def get_food_grams(df, macro_goals, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables"):
+  protein_str = macro_str_maker(df, macro_goals, ingredient_category = protein_source, macro = "proteins")
+  carb_str = macro_str_maker(df, macro_goals, ingredient_category = carb_source, macro = "carbs")
+  fat_str = macro_str_maker(df, macro_goals, ingredient_category = fat_source, macro = "fats")
+  return protein_str + carb_str + fat_str
 
-    # Define the constraints
-    constraints = {
-        'type': 'ineq',  # Inequality constraints
-        'fun': lambda amounts: constraint_function(amounts, target_macros, ingredients)
-    }
+def cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables"):
+  macro_goals = get_exemplary_macros(macros, protein_source, carb_source, fat_source)
+  meal_str = get_food_grams(df, macro_goals, protein_source, carb_source, fat_source)
+  return meal_str
 
-    # Use the minimize function with the objective and constraints
-    result = minimize(
-        objective_function,
-        initial_guess,
-        args=(target_macros, ingredients),
-        bounds=bounds,
-        constraints=constraints,
-        method='SLSQP'  # Sequential Least Squares Programming (handles bounds and constraints)
-    )
-    amounts = result.x  # Convert back to grams (since we work with per 100g macros)
-    x, y, z = amounts
-    return round_to_nearest_five(x), round_to_nearest_five(y), round_to_nearest_five(z)
-
-def calculate_amounts_meal(macro_goals, ingredient1, ingredient2, ingredient3):
-    ingredients = ingredient_array(ingredient1, ingredient2, ingredient3)
-    ingredient1_grams, ingredient2_grams, ingredient3_grams = calculate_amounts(macro_goals, ingredients)
-    return ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1["name"], ingredient2["name"], ingredient3["name"]
-
-
-
-def get_meals_df(new_data):
+def get_meals_df(df, new_data):
   all_meals = []
   for key, macros in new_data.items():
     if key.endswith('_1'):
-      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, huevo, pan_bimbo, jamon_serrano)
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
 
     if key.endswith('_2'):
-      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, arroz, aguacate)
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
 
     if key.endswith('_3'):
-      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, spagetis, aguacate)
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
 
     if key.endswith("_pre_entrenamiento"):
-      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = 60, 15, 10, "Tortitas de arroz", "Miel", "Cacahuetes"
+      meal_str = "Tortitas de arroz: 60 g. Miel: 15 g. Cacahuetes: 10 g"
+
+    if key.endswith("_post_entrenamiento"):
+      meal_str = "Batido de proteina: 50 g"
 
     if key.endswith('_4'):
-      ingredient1_grams, ingredient2_grams, ingredient3_grams, ingredient1_name, ingredient2_name, ingredient3_name = calculate_amounts_meal(macros, pechuga_pollo, spagetis, aguacate)
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
 
-    all_meals.append([key[0], "Comida "+key[2:], ingredient1_name + ": "+ str(ingredient1_grams)+" g. " + ingredient2_name + ": "+ str(ingredient2_grams)+" g. " + ingredient3_name + ": "+ str(ingredient3_grams)+" g"])
+    if key.endswith('_5'):
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+
+    all_meals.append([key[0], "Comida "+(key[2:]).replace("_", " "), meal_str])
 
   columns = ['n_meals', 'meal_type', 'ingredients']
   df = pd.DataFrame(all_meals, columns=columns)
   return df
-
 
 def adjust_calories(n_years_training, weight, type_of_weight_change, new_weight, calories, goal, gender):
   assert gender in ["Male", "Female"], "Gender must be Male or Female"
