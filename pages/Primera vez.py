@@ -64,8 +64,7 @@ if submitted:
         ("Use Post-Workout Supplement", post_workout)
     ]
 
-    # Convert to DataFrame with two columns: 'Feature' and 'Value'
-    df = pd.DataFrame(user_data, columns=["Feature", "Value"])
+
 
     calories, kg_per_week = get_calories(weight, height, age, n_years_training, gender, activity, goal, type_of_weight_change, body_fat)
     fats, carbs, proteins = macros_cutting(weight, calories, preference_high_fats, preference_high_protein)
@@ -77,6 +76,7 @@ if submitted:
     # Display the submitted data
     user_data.append([("Total macros"), (fats, carbs, proteins)])
     user_data.append([("Meal macros"), new_data])
+    df = pd.DataFrame(user_data, columns=["Feature", "Value"])
     st.write("Here are your inputs:")
     st.dataframe(df)
 
