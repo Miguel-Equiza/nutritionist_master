@@ -176,18 +176,25 @@ def get_exemplary_macros(df, macro_goals, protein_category, carb_category, fat_c
   carb_source = df[df["category"] == carb_category].iloc[0,:]
   fat_source = df[df["category"] == fat_category].iloc[0,:]
 
-  macro_goals["carbs"] -= 3
-  carb_grams = macro_goals["carbs"]/carb_source["carbs"]
+  carbs = macro_goals["carbs"] - 3
+  carb_grams = carbs/carb_source["carbs"]
 
-  macro_goals["proteins"] = macro_goals["proteins"] - carb_source["proteins"]*carb_grams
-  protein_grams = macro_goals["proteins"]/protein_source["proteins"]
-  macro_goals["fats"] = macro_goals["fats"] - protein_source["fats"]*protein_grams - carb_source["fats"]*carb_grams
-  fat_grams = macro_goals["fats"]/fat_source["fats"]
+  proteins = macro_goals["proteins"] - carb_source["proteins"]*carb_grams
+  protein_grams = proteins/protein_source["proteins"]
 
-  macro_goals["fats"] = macro_goals["fats"]
-  macro_goals["carbs"] = macro_goals["carbs"] - fat_grams*fat_source["carbs"]
-  macro_goals["proteins"] = macro_goals["proteins"] - fat_grams*fat_source["proteins"]
-  return macro_goals
+  fats = macro_goals["fats"] - protein_source["fats"]*protein_grams - carb_source["fats"]*carb_grams
+  fat_grams = fats/fat_source["fats"]
+
+
+  carbs = carbs - fat_grams*fat_source["carbs"]
+  proteins = proteins - fat_grams*fat_source["proteins"]
+
+  new_macros = {
+      "fats": fats,
+      "carbs": carbs,
+      "proteins": proteins
+  }
+  return new_macros
 
 def round_to_nearest_five(n):
     if n<0: n = 0
