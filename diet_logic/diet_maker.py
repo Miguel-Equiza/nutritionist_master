@@ -206,7 +206,7 @@ def get_food_grams(df, macro_goals, protein_source = "carne limpia", carb_source
   return protein_str + carb_str + fat_str
 
 def cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables"):
-  macro_goals = get_exemplary_macros(macros, protein_source, carb_source, fat_source)
+  macro_goals = get_exemplary_macros(df, macros, protein_source, carb_source, fat_source)
   meal_str = get_food_grams(df, macro_goals, protein_source, carb_source, fat_source)
   return meal_str
 
