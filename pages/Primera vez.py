@@ -4,6 +4,7 @@ from io import BytesIO
 from diet_logic.diet_maker import *
 from diet_logic.meals_dict import *
 
+
 # Set up a form to accept all input variables
 st.title("Personal Fitness Parameters")
 
@@ -66,16 +67,20 @@ if submitted:
     # Convert to DataFrame with two columns: 'Feature' and 'Value'
     df = pd.DataFrame(user_data, columns=["Feature", "Value"])
 
-    # Display the submitted data
-    st.write("Here are your inputs:")
-    st.dataframe(df)
-
     calories, kg_per_week = get_calories(weight, height, age, n_years_training, gender, activity, goal, type_of_weight_change, body_fat)
     fats, carbs, proteins = macros_cutting(weight, calories, preference_high_fats, preference_high_protein)
     meals = meal_calories(calories, fats, carbs, proteins, min_calories_meal, max_calories_meal, min_meals, max_meals, pre_workout, post_workout, pre_workout_cals, post_workout_cals)
     new_data = generate_specific_meals(meals)
     all_ingredients_df = pd.DataFrame(comida)
     meals_df = get_meals_df(all_ingredients_df, new_data)
+
+    # Display the submitted data
+    user_data.append([("Total macros"), (fats, carbs, proteins)])
+    user_data.append([("Meal macros"), new_data])
+    st.write("Here are your inputs:")
+    st.dataframe(df)
+
+
 
     st.write("Here are your diets:")
     st.dataframe(meals_df)
