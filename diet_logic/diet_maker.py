@@ -155,7 +155,7 @@ def generate_specific_meals(meals):
     # Iterate over the original dictionary
     for key, value in meals.items():
         # Extract only the specific fields for the new keys
-        sub_dict = {k: v for k, v in value.items() if k in ['fats', 'carbs', 'proteins']}
+        sub_dict = {k: int(v) for k, v in value.items() if k in ['fats', 'carbs', 'proteins']}
 
         # Create new keys with suffix and assign the sub_dict
         for j in range(1, key+1):
