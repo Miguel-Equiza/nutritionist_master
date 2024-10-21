@@ -75,7 +75,8 @@ if submitted:
 
     # Display the submitted data
     user_data.append([("Total macros"), (fats, carbs, proteins)])
-    user_data.append([("Meal macros"), new_data])
+    user_data.append([("meals"), meals])
+    user_data.append([("new data"), new_data])
     df = pd.DataFrame(user_data, columns=["Feature", "Value"])
     st.write("Here are your inputs:")
     st.dataframe(df)
