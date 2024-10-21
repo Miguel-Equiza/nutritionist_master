@@ -214,25 +214,25 @@ def get_meals_df(df, new_data):
   all_meals = []
   for key, macros in new_data.items():
     if key.endswith('_1'):
-      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales desayuno", fat_source = "Frutos secos")
 
     if key.endswith('_2'):
-      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+      meal_str = cals_to_grams(df, macros, protein_source = "Carne moderada en grasas", carb_source = "harinas, cereales comida", fat_source = "Aceites, aguacates y aceitunas")
 
     if key.endswith('_3'):
-      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+      meal_str = cals_to_grams(df, macros, protein_source = "Pescado blanco", carb_source = "Legumbres", fat_source = "Frutos secos")
 
     if key.endswith("_pre_entrenamiento"):
       meal_str = "Tortitas de arroz: 60 g. Miel: 15 g. Cacahuetes: 10 g"
 
     if key.endswith("_post_entrenamiento"):
-      meal_str = "Batido de proteina: 50 g"
+      meal_str = cals_to_grams(df, macros, protein_source = "Huevos y lacteos desnatados", carb_source = "harinas, cereales desayuno", fat_source = "Aceites, aguacates y aceitunas")
 
     if key.endswith('_4'):
-      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+      meal_str = cals_to_grams(df, macros, protein_source = "Pescado azul", carb_source = "harinas, cereales comida", fat_source = "Frutos secos")
 
     if key.endswith('_5'):
-      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales", fat_source = "grasas saludables")
+      meal_str = cals_to_grams(df, macros, protein_source = "carne limpia", carb_source = "harinas, cereales comida", fat_source = "Aceites, aguacates y aceitunas")
 
     all_meals.append([key[0], "Comida "+(key[2:]).replace("_", " "), meal_str])
 
